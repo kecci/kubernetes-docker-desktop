@@ -118,37 +118,51 @@ If you check you _About Docker_, you should see something similar to:
 
 Let us try out a few things to ensure that we can make sense of what has got installed. Execute the following commands in a terminal:
 
-\> kubectl version **Client Version** : version.Info{Major:"1", Minor:"14", GitVersion:"v **1.14.1**", GitCommit:"b7394102d6ef778017f2ca4046abbaa23b88c290", GitTreeState:"clean", BuildDate:"2019-04-19T22:13:37Z", GoVersion:"go1.12.4", Compiler:"gc", Platform:"darwin/amd64"} **Server Version** : version.Info{Major:"1", Minor:"19", GitVersion:"v **1.19.7**", GitCommit:"1dd5338295409edcfff11505e7bb246f0d325d15", GitTreeState:"clean", BuildDate:"2021-01-13T13:15:20Z", GoVersion:"go1.15.5", Compiler:"gc", Platform:"linux/amd64"}
+\> kubectl version 
+```
+**Client Version** : version.Info{Major:"1", Minor:"14", GitVersion:"v **1.14.1**", GitCommit:"b7394102d6ef778017f2ca4046abbaa23b88c290", GitTreeState:"clean", BuildDate:"2019-04-19T22:13:37Z", GoVersion:"go1.12.4", Compiler:"gc", Platform:"darwin/amd64"} **Server Version** : version.Info{Major:"1", Minor:"19", GitVersion:"v **1.19.7**", GitCommit:"1dd5338295409edcfff11505e7bb246f0d325d15", GitTreeState:"clean", BuildDate:"2021-01-13T13:15:20Z", GoVersion:"go1.15.5", Compiler:"gc", Platform:"linux/amd64"}
+```
 
 You might have noticed that my server and client versions are different. I am using kubectl from my gCloud SDK tools and Docker for Mac, when it launched the Kubernetes cluster has been able to set the cluster context for the kubectl utility for you. So if we fire the following command:
 
 \> kubectl config current-context
+```
  docker-desktop
+```
 
 You can see that the cluster is set to  **docker-for-desktop**.
 
 _Tip_: In case you switch between different clusters, you can always get back using the following:
 
 $ kubectl config use-context docker-for-desktop
+```
  Switched to context "docker-for-desktop"
+```
 
 Let us get some information on the cluster.
 
 \> kubectl cluster-info
+```
  Kubernetes master is running at [https://kubernetes.docker.internal:6443](https://kubernetes.docker.internal:6443/)
  KubeDNS is running at [https://kubernetes.docker.internal:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy](https://kubernetes.docker.internal:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy)To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+```
 
 Let us check out the nodes in the cluster:
 
 \> kubectl get nodes
+```
  NAME STATUS ROLES AGE VERSION
  docker-desktop Ready master 21h v1.19.7
+```
 
 **Installing the Kubernetes Dashboard**
 
 The next step that we need to do here is to install the [Kubernetes Dashboard](https://github.com/kubernetes/dashboard). We can use the Kubernetes Dashboard YAML that is available and submit the same to the Kubernetes Master as follows:
 
-\> kubectl apply -f [https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc3/aio/deploy/recommended.yaml](https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-rc3/aio/deploy/recommended.yaml)namespace/kubernetes-dashboard created
+\> kubectl apply -f [kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml](kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml)
+
+```
+namespace/kubernetes-dashboard created
  serviceaccount/kubernetes-dashboard created
  service/kubernetes-dashboard created
  secret/kubernetes-dashboard-certs created
@@ -162,10 +176,12 @@ The next step that we need to do here is to install the [Kubernetes Dashboard](h
  deployment.apps/kubernetes-dashboard created
  service/dashboard-metrics-scraper created
  deployment.apps/dashboard-metrics-scraper created
+```
 
 The Dashboard application will get deployed as a Pod in the  **kubernetes-dashboard ** namespace. We can get a list of all our Pods in all namespaces via the following command:
 
 \> kubectl get pods --all-namespaces
+```
  NAMESPACE NAME READY STATUS RESTARTS AGE
  docker compose-7b7c5cbbcc-ft6zt 1/1 Running 0 2d
  docker compose-api-dbbf7c5db-8w9qw 1/1 Running 0 2d
@@ -178,6 +194,7 @@ The Dashboard application will get deployed as a Pod in the  **kubernetes-dashbo
  kube-system kube-scheduler-docker-desktop 1/1 Running 0 2d
  kubernetes-dashboard dashboard-metrics-scraper-7f5767668b-w5tl4 1/1 Running 0 41h
  kubernetes-dashboard **kubernetes-dashboard** -58df6bddcb-2xbkg 1/1 Running 0 41h
+```
 
 Ensure that the Pod "_kubernetes-dashboard-_\*" is in Running state. It could take some time to change from  **ContainerCreating**  to  **Running** , so be patient.
 
@@ -190,7 +207,9 @@ _kubectl proxy_ creates a proxy server between your machine and Kubernetes API s
 Start a local proxy server.
 
 \> kubectl proxy
+```
  Starting to serve on 127.0.0.1:8001
+```
 
 Once proxy server is started you should be able to access Dashboard from your browser.
 
@@ -204,9 +223,39 @@ You will see the following screen:
 
 Login page for Kubernetes Dashboard
 
-To find a valid token here you have a useful one-liner
+## Create An Authentication Token (RBAC)
 
-\> kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | awk '/^deployment-controller-token-/{print $1}') | awk '$1=="token:"{print $2}'eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJkZXBsb3ltZW50LWNvbnRyb2xsZXItdG9rZW4tZnp3NzgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiZGVwbG95bWVudC1jb250cm9sbGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiOWJmOGE4ZDAtZDg1Ny00YzBlLThmNzktZDk3MDEyZDBjMjU5Iiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50Omt1YmUtc3lzdGVtOmRlcGxveW1lbnQtY29udHJvbGxlciJ9.H\_6nQYQ1ltSHUTddNgUjpRHKe82hC-ipL0S\_08lK90rWE0hZir9fq1H9LhEyjSgt3QVIYCEiG8qiIqkQO0I2dvQN\_CbQHnLl6dmhlrn7astFdu2F621plNQaC6MHfL5YTsTfJEER2sx5qDuEgtZXobWQ8-64w2d6RfHEIFZIxmno8Oj7XccjfBv12p74qyleJYIOBSuglaHyOx8RaDROCkW0OR-9DHa4zlcU28YqW83J3ynxjwqPvu\_QzUc5xcycUk1nEfjWZORjH9A1D\_Qdj5DNud7g1Pa\_HHQZ50LBjIWKmwNLF7CSA-\_\_goCPfWFfcC\_gHANhFAfGYeU5sKWz9g
+To find out how to create sample user and log in follow [Creating sample user](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md) guide.
+
+NOTE:
+- Kubeconfig Authentication method does not support external identity providers or certificate-based authentication.
+- Metrics-Server has to be running in the cluster for the metrics and graphs to be available. Read more about it in Integrations guide.
+
+### Creating a Service Account
+We are creating Service Account with the name admin-user in namespace kubernetes-dashboard first. `dashboard-adminuser.yaml`:
+```
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+```
+
+To create a service account:
+
+`$ kubectl apply -f dashboard-adminuser.yaml`
+```
+serviceaccount/admin-user created
+```
+
+## Getting a Bearer Token
+
+Now we need to find the token we can use to log in. Execute the following command:
+
+`$ kubectl -n kubernetes-dashboard create token admin-user`
+```
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjN1S25pOG1fWHdvLXFPbm90QU1iM0U3QUpUSEpFUHpRMUdhb2lCV3JGdzQifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjY4NDE2MTQ0LCJpYXQiOjE2Njg0MTI1NDQsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiYzU0MDkwODAtN2I3My00ZDBhLTlhYmQtYWQ3Njc4ZWVkYTI3In19LCJuYmYiOjE2Njg0MTI1NDQsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.JyK6KbtB_UlXKHVzkJRgoERJKCoYzHXCfUL8qAjD63WMA_j8oco6DT8m4o7SJ--sW6QSwp_HUq3dCB4WjDx9GiZ3RNuzDptcxv6I7uVCmTB9nv65zoL3QC3NV2oJNE1DxY5PlqxcOQsg6mYJOw_FHpec9k0vhBgY0YCDmsvz1x1GWyC58jdTQsUTrcUQQsNFpEDSJbass53ZDgzY05VxSnEqxwZVes6HjP-cJK6-0WTME1JQD3gcxVR7XfQfYtvW1FZNXkHli8bEJMz-rESsyft9RECzInHpYv9LGYpmcbLd1LZZjFYr7mdLzxlsiM_zCWNoPo-NaPzPfgts3E65Dg
+```
 
 Copy & paste that token into the field and click  **Sign In ** to login, the dashboard will show as below:
 
@@ -234,7 +283,9 @@ alias k=kubectl
 Now let's create our first namespace:
 
 \> k create namespace my-demo
+```
  namespace/my-demo created
+```
 
 To easy work within our new context let's make it the default:
 
@@ -255,16 +306,20 @@ k run nginx --image=nginx --port=80 --restart=Never
 This creates a Pod ([https://kubernetes.io/docs/reference/kubectl/conventions/#generators](https://kubernetes.io/docs/reference/kubectl/conventions/#generators)) and we can investigate into the Pod that gets created, which will run the container:
 
 \> k get pods
+```
  NAME READY STATUS RESTARTS AGE
  nginx 0/1 ContainerCreating 0 4s
+```
 
 You can see that the STATUS column value is  **ContainerCreating**.
 
 If we wait for a while, the Pod will eventually get created and it will ready as the command below shows:
 
 \> k get pods
+```
  NAME READY STATUS RESTARTS AGE
  nginx 1/1 Running 0 14s
+```
 
 Now, let us go back to the Dashboard and get to the Pods via the  **Pods**  link in the Workloads as shown below:
 
@@ -336,7 +391,9 @@ k describe pod nginx
 It is time now to expose our basic Nginx deployment as a service. We can use the command shown below:
 
 \> k expose pod nginx --type=NodePort
+```
  service/nginx exposed
+```
 
 If we visit the Dashboard at this point and go to the Services section, we can see our  **nginx ** service entry.
 
@@ -345,12 +402,15 @@ If we visit the Dashboard at this point and go to the Services section, we can s
 Alternately, we can use the terminal too, to check it out:
 
 \> k get svc
+```
  NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE
  nginx NodePort 10.104.91.251 \<none\> 80:31338/TCP 4s
+```
 
 and
 
 \> k describe service nginx
+```
  Name: nginx
  Namespace: my-demo
  Labels: run=nginx
@@ -366,6 +426,7 @@ and
  Session Affinity: None
  External Traffic Policy: Cluster
  Events: \<none\>
+```
 
 You can now visit: [localhost:31338](http://localhost:31338/) and you will see nginx welcome page:
 
