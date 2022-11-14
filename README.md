@@ -269,16 +269,18 @@ First things first, setup your command line for productivity:
 
 1. Kubectl autocomplete
 
-Bashsource \<(kubectl completion bash)
+Bash `source <(kubectl completion bash)`
 
-Zshsource \<(kubectl completion zsh)
+Zsh `source <(kubectl completion zsh)`
 
 2. Alias for kubectl
 
 Alias to type less (lazy is good) and it will also work with completion:
 
+```
 alias k=kubectl
- complete -F \_\_start\_kubectl k
+complete -F __start_kubectl k
+```
 
 Now let's create our first namespace:
 
@@ -289,19 +291,25 @@ Now let's create our first namespace:
 
 To easy work within our new context let's make it the default:
 
-kubectl config set-context — current — namespace=my-demo
+```
+kubectl config set-context --current --namespace=my-demo
+```
 
 TIP: create an alias with this, to be able to check contexts easily:
 
-alias kn='kubectl config set-context — current — namespace
+```
+alias kn='kubectl config set-context --current --namespace
+```
 
 so now you can do
 
-kn my-demo or kn default
+`kn my-demo` or `kn default`
 
 We are going to use the run command as shown below:
 
+```
 k run nginx --image=nginx --port=80 --restart=Never
+```
 
 This creates a Pod ([https://kubernetes.io/docs/reference/kubectl/conventions/#generators](https://kubernetes.io/docs/reference/kubectl/conventions/#generators)) and we can investigate into the Pod that gets created, which will run the container:
 
@@ -337,7 +345,8 @@ There are some interesting links that you will find on this page as shown below,
 
 We could have got the Node and Pod details via a variety of  **kubectl describe node/pod**  commands and we can still do that. An example of that is shown below:
 
-k describe pod nginx
+`k describe pod nginx`
+```
  Name: nginx
  Namespace: my-demo
  Priority: 0
@@ -385,6 +394,7 @@ k describe pod nginx
  Normal Pulled 25h kubelet, docker-desktop Successfully pulled image "nginx"
  Normal Created 25h kubelet, docker-desktop Created container nginx
  Normal Started 25h kubelet, docker-desktop Started container nginx
+```
 
 **Expose a Service**
 
